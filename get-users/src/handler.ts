@@ -3,49 +3,64 @@ import {
   APIGatewayProxyResult,
   Context,
 } from 'aws-lambda';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
   GetCommand,
   GetCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 
-const client = new DynamoDBClient({
-  region: 'localhost',
-  endpoint: 'http://localhost:8000',
-  credentials: {
-    accessKeyId: 'DUMMY_AWS_ACCESS_KEY_ID',
-    secretAccessKey: 'DUMMY_AWS_SECRET_ACCESS_KEY',
-  },
-});
-const ddbDocClient = DynamoDBDocumentClient.from(client);
+let ddbClientConfig: DynamoDBClientConfig = {
+  region: process.env.AWS_REGION,
+};
+
+if (process.env.IS_OFFLINE) {
+  ddbClientConfig = {
+    region: 'localhost',
+    endpoint: 'http://localhost:8000',
+    credentials: {
+      accessKeyId: 'DUMMY_AWS_ACCESS_KEY_ID',
+      secretAccessKey: 'DUMMY_AWS_SECRET_ACCESS_KEY',
+    },
+  };
+}
+
+const ddbClient = new DynamoDBClient(ddbClientConfig);
+const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
 
 const getUsers = async (
-  _request: APIGatewayProxyEvent,
+  event: APIGatewayProxyEvent,
   _context: Context
 ): Promise<APIGatewayProxyResult> => {
+  const id = event.pathParameters?.id;
+
+  if (id === undefined) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: 'user id not provided' }),
+    };
+  }
+
   const params: GetCommandInput = {
-    TableName: 'Users',
+    TableName: process.env.USERS_TABLE_NAME,
     Key: {
-      id: '1',
+      id,
     },
   };
 
   const result = await ddbDocClient.send(new GetCommand(params));
 
-  let response: APIGatewayProxyResult = {
-    statusCode: 204,
-    body: JSON.stringify({ message: 'user not found' }),
-  };
-
-  if (result.Item) {
-    response = {
-      statusCode: 200,
-      body: JSON.stringify({ message: result.Item }),
+  if (result.Item === undefined) {
+    return {
+      statusCode: 204,
+      body: JSON.stringify({ message: 'user not found' }),
     };
   }
 
-  return response;
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ message: result.Item }),
+  };
 };
 
 export { getUsers };

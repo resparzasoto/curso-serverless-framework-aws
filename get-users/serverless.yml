@@ -8,6 +8,8 @@ plugins:
 
 provider:
   name: aws
+  stage: dev
+  region: us-east-1
   runtime: nodejs16.x
   iam:
     role:
@@ -20,7 +22,7 @@ provider:
             - dynamodb:PutItem
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
-          Resource: "arn:aws:dynamodb:${aws:region}:*:table/Users"
+          Resource: !GetAtt UsersDynamoDBTable.Arn
 
 custom:
   dynamodb:
@@ -63,8 +65,10 @@ functions:
     timeout: 10
     events:
       - http:
-          path: users
+          path: users/{id}
           method: GET
+    environment:
+      USERS_TABLE_NAME: !Ref UsersDynamoDBTable
 
 resources:
   Resources:
