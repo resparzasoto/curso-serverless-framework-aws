@@ -2,18 +2,51 @@ service: crud-serverless-users
 
 frameworkVersion: "3"
 
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline
+
 provider:
   name: aws
   runtime: nodejs16.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:${aws:region}:*:table/Users"
 
-plugins:
-  - serverless-offline
+custom:
+  dynamodb:
+    stages:
+      - dev
+    start:
+      docker: true
+      port: 8000
+      inMemory: true
+      migrate: true
+      seed: true
+      noStart: true
+    migration:
+      dir: offline/migrations
+    seed:
+      initial:
+        sources:
+          - table: Users
+            sources: [./dynamodb/offline/seeds/users.json]
 
 package:
   patterns:
     - "dist/**/*.js"
     - "!dist/**/*.js.map"
     - "!src/**"
+    - "!dynamodb/**"
     - "!serverless.yml"
     - "!tsconfig.json"
     - "!package.json"

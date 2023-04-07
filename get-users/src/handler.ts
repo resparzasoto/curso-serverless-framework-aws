@@ -10,7 +10,14 @@ import {
   GetCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 
-const client = new DynamoDBClient({});
+const client = new DynamoDBClient({
+  region: 'localhost',
+  endpoint: 'http://localhost:8000',
+  credentials: {
+    accessKeyId: 'DUMMY_AWS_ACCESS_KEY_ID',
+    secretAccessKey: 'DUMMY_AWS_SECRET_ACCESS_KEY',
+  },
+});
 const ddbDocClient = DynamoDBDocumentClient.from(client);
 
 const getUsers = async (
@@ -26,10 +33,17 @@ const getUsers = async (
 
   const result = await ddbDocClient.send(new GetCommand(params));
 
-  const response: APIGatewayProxyResult = {
-    statusCode: 200,
-    body: JSON.stringify(result.Item),
+  let response: APIGatewayProxyResult = {
+    statusCode: 204,
+    body: JSON.stringify({ message: 'user not found' }),
   };
+
+  if (result.Item) {
+    response = {
+      statusCode: 200,
+      body: JSON.stringify({ message: result.Item }),
+    };
+  }
 
   return response;
 };
