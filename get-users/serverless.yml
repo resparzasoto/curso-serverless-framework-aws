@@ -1,0 +1,50 @@
+service: crud-serverless-users
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+
+plugins:
+  - serverless-offline
+
+package:
+  patterns:
+    - "dist/**/*.js"
+    - "!dist/**/*.js.map"
+    - "!src/**"
+    - "!serverless.yml"
+    - "!tsconfig.json"
+    - "!package.json"
+    - "!package-lock.json"
+  individually: true
+
+functions:
+  get-users:
+    handler: dist/handler.getUsers
+    name: get-users
+    description: Hello world function with typescript
+    memorySize: 128
+    runtime: nodejs16.x
+    timeout: 10
+    events:
+      - http:
+          path: users
+          method: GET
+
+resources:
+  Resources:
+    UsersDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Users
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        SSESpecification:
+          SSEEnabled: true
