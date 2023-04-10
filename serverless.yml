@@ -45,21 +45,49 @@ custom:
 
 package:
   patterns:
-    - "dist/**/*.js"
-    - "!dist/**/*.js.map"
-    - "!src/**"
-    - "!dynamodb/**"
+    - "!.vscode"
+    - "!dynamodb"
+    - "!createUsers"
+    - "!getUsers"
+    - "!helloWorld"
+    - "!.editorconfig"
+    - "!.env"
+    - "!.env.example"
+    - "!LICENSE"
+    - "!package-lock.json"
+    - "!package.json"
+    - "!README.md"
     - "!serverless.yml"
     - "!tsconfig.json"
-    - "!package.json"
-    - "!package-lock.json"
+    - "!dist/**/*.js.map"
   individually: true
 
 functions:
-  get-users:
-    handler: dist/handler.getUsers
-    name: get-users
-    description: Hello world function with typescript
+  createUsers:
+    handler: dist/createUsers/handler.createUsers
+    name: createUsers
+    description: Create users function with typescript
+    package:
+      patterns:
+        - "!dist"
+        - "dist/createUsers/**/*.js"
+    memorySize: 128
+    runtime: nodejs16.x
+    timeout: 10
+    events:
+      - http:
+          path: users
+          method: POST
+    environment:
+      USERS_TABLE_NAME: !Ref UsersDynamoDBTable
+  getUsers:
+    handler: dist/getUsers/handler.getUsers
+    name: getUsers
+    description: Get users function with typescript
+    package:
+      patterns:
+        - "!dist"
+        - "dist/getUsers/**/*.js"
     memorySize: 128
     runtime: nodejs16.x
     timeout: 10

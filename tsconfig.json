@@ -28,5 +28,5 @@
     ".serverless/**/*",
     ".vscode/**/*"
   ],
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": ["getUsers/**/*.ts", "createUsers/**/*.ts"]
 }

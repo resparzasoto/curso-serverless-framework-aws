@@ -6,9 +6,10 @@ import {
 import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
-  GetCommand,
-  GetCommandInput,
+  PutCommand,
+  PutCommandInput,
 } from '@aws-sdk/lib-dynamodb';
+import { randomUUID } from 'crypto';
 
 let ddbClientConfig: DynamoDBClientConfig = {
   region: process.env.AWS_REGION,
@@ -23,44 +24,41 @@ if (process.env.IS_OFFLINE) {
       secretAccessKey: 'DUMMY_AWS_SECRET_ACCESS_KEY',
     },
   };
+  process.env.USERS_TABLE_NAME = 'Users';
 }
 
 const ddbClient = new DynamoDBClient(ddbClientConfig);
 const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
 
-const getUsers = async (
+const createUsers = async (
   event: APIGatewayProxyEvent,
   _context: Context
 ): Promise<APIGatewayProxyResult> => {
-  const id = event.pathParameters?.id;
-
-  if (id === undefined) {
+  if (!event.body) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ message: 'user id not provided' }),
+      body: JSON.stringify({ message: 'user not provided' }),
     };
   }
 
-  const params: GetCommandInput = {
+  const user = JSON.parse(event.body);
+  user.id = randomUUID();
+
+  const params: PutCommandInput = {
     TableName: process.env.USERS_TABLE_NAME,
-    Key: {
-      id,
-    },
+    Item: user,
   };
 
-  const result = await ddbDocClient.send(new GetCommand(params));
+  console.info(`user to create: ${JSON.stringify(params.Item)}`);
 
-  if (result.Item === undefined) {
-    return {
-      statusCode: 204,
-      body: JSON.stringify({ message: 'user not found' }),
-    };
-  }
+  await ddbDocClient.send(new PutCommand(params));
 
   return {
-    statusCode: 200,
-    body: JSON.stringify({ message: result.Item }),
+    statusCode: 201,
+    body: JSON.stringify({
+      message: `user created with id: ${params.Item!.id}`,
+    }),
   };
 };
 
-export { getUsers };
+export { createUsers };

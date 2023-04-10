@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "sls:debug": "SLS_DEBUG=* && sls offline start --noTimeout",
+    "sls:offline:debug": "SLS_DEBUG=* && sls offline start --noTimeout",
     "sls:package": "npm run sls:clean:package && npm run sls:build:package",
     "sls:clean:package": "rimraf node_modules/ && rimraf dist/ rimraf .serverless/",
     "sls:build:package": "npm ci && npm run build && sls package",
