@@ -28,5 +28,5 @@
     ".serverless/**/*",
     ".vscode/**/*"
   ],
-  "include": ["getUsers/**/*.ts", "createUsers/**/*.ts"]
+  "include": ["createUsers/**/*.ts", "updateUsers/**/*.ts", "getUsers/**/*.ts"]
 }
